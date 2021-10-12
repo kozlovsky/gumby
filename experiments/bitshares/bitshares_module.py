@@ -15,7 +15,6 @@ from gumby.modules.experiment_module import ExperimentModule, static_module
 from gumby.util import run_task
 
 
-@static_module
 class BitsharesModule(BlockchainModule):
 
     def __init__(self, experiment):
