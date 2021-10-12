@@ -45,9 +45,9 @@ fi
 # If we compile for Python 3, we want to install a newer version since the version on the DAS5 is outdated.
 if [ ! -e ~/python3/bin/python3 ]; then
     pushd $HOME
-    wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz
-    tar -xzvf Python-3.7.3.tgz
-    pushd Python-3.7.3
+    wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz
+    tar -xzvf Python-3.8.12.tgz
+    pushd Python-3.8.12
     ./configure --prefix=$PWD/../python3
     make install -j24
     popd
