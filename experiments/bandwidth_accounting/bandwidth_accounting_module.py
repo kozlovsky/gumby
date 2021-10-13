@@ -1,6 +1,6 @@
 import random
 
-from tribler_core.modules.bandwidth_accounting.community import BandwidthAccountingCommunity
+from tribler_core.components.bandwidth_accounting.community.bandwidth_accounting_community import  BandwidthAccountingCommunity
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule

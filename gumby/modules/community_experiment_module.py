@@ -60,8 +60,8 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         return self.ipv8_provider.ipv8
 
     @property
-    def session(self):
-        return self.ipv8_provider.session
+    def gumby_session(self):
+        return self.ipv8_provider.gumby_session
 
     @property
     def tribler_config(self):
@@ -70,7 +70,7 @@ class IPv8OverlayExperimentModule(ExperimentModule):
         # the tribler_config after the session has launched, return the session. It acts as a tribler_config as well and
         # alerts the user if some setting cannot be changed at runtime.
         if self.ipv8_provider.tribler_config is None:
-            return self.session
+            return self.gumby_session
 
         return self.ipv8_provider.tribler_config
 

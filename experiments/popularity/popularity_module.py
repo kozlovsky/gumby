@@ -4,10 +4,12 @@ import random
 from asyncio import Future
 from binascii import hexlify, unhexlify
 
-from tribler_core.modules.popularity.popularity_community import PopularityCommunity
-from tribler_core.modules.metadata_store.orm_bindings.channel_node import NEW
+from tribler_core.components.popularity.community.popularity_community import PopularityCommunity
+from tribler_core.components.metadata_store.db.orm_bindings.channel_node import NEW
 from ipv8.taskmanager import TaskManager
 from pony.orm import db_session, count
+
+from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
@@ -73,8 +75,11 @@ class PopularityModule(IPv8OverlayExperimentModule):
 
     @experiment_callback
     def set_fake_dht_health_manager(self):
+        libtorrent_component = LibtorrentComponent.instance()
+        assert libtorrent_component
+        download_manager = libtorrent_component.download_manager
         self.fake_dht_health_manager = FakeDHTHealthManager()
-        self.session.dlmgr.dht_health_manager = self.fake_dht_health_manager
+        download_manager.dht_health_manager = self.fake_dht_health_manager
 
     @experiment_callback
     def introduce_peers_popularity(self):

@@ -11,17 +11,17 @@ def tribler_tunnel_community():
 
 
 def bandwidth_accounting_community():
-    from tribler_core.modules.bandwidth_accounting.community import BandwidthAccountingCommunity
+    from tribler_core.components.bandwidth_accounting.community.bandwidth_accounting_community import BandwidthAccountingCommunity
     return BandwidthAccountingCommunity
 
 
 def popularity_community():
-    from tribler_core.modules.popularity.community import PopularityCommunity
+    from tribler_core.components.popularity.community.popularity_community import PopularityCommunity
     return PopularityCommunity
 
 
 def giga_channel_community():
-    from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
+    from tribler_core.components.gigachannel.community.gigachannel_community import GigaChannelCommunity
     return GigaChannelCommunity
 
 
@@ -32,7 +32,7 @@ def golden_ratio_strategy():
 
 
 def remove_peers():
-    from tribler_core.modules.metadata_store.community.sync_strategy import RemovePeers
+    from tribler_core.components.gigachannel.community.sync_strategy import RemovePeers
     return RemovePeers
 
 

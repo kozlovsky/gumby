@@ -25,12 +25,12 @@ class GumbyMinimalSession:
 
     def __init__(self, config):
         self.config = config
-        self.trustchain_keypair = None
+        self.trustchain_keypair = read_keypair_trustchain(self.config.trustchain.ec_keypair_filename)
 
 
 @runtime_checkable
 class IPv8Provider(Protocol):
-    session: Optional[GumbyMinimalSession]
+    gumby_session: Optional[GumbyMinimalSession]
     ipv8_available: Future
     ipv8: Optional[IPv8]
     custom_ipv8_community_loader: IsolatedIPv8CommunityLoader
@@ -50,8 +50,8 @@ class BaseIPv8Module(ExperimentModule, IPv8Provider):
         if BaseIPv8Module.get_ipv8_provider(experiment) is not None:
             raise Exception("Unable to load multiple IPv8 providers in a single experiment")
 
-        super(BaseIPv8Module, self).__init__(experiment)
-        self.session = None
+        super().__init__(experiment)
+        self.gumby_session = None
         self.tribler_config = None
         self.ipv8_port = None
         self.session_id = os.environ['SYNC_HOST'] + os.environ['SYNC_PORT']
@@ -108,7 +108,7 @@ class BaseIPv8Module(ExperimentModule, IPv8Provider):
             statistics_file.write(json.dumps(new_dict) + '\n')
 
     def on_id_received(self):
-        super(BaseIPv8Module, self).on_id_received()
+        super().on_id_received()
         self.tribler_config = self.setup_config()
 
     def create_ipv8_community_loader(self):
@@ -123,16 +123,15 @@ class BaseIPv8Module(ExperimentModule, IPv8Provider):
         Start an IPv8 session.
         """
         ipv8_config = get_default_configuration()
-        ipv8_config['port'] = self.tribler_config.ipv8.port
+        ipv8_config['port'] = self.tribler_config.ipv8.port 
         ipv8_config['overlays'] = []
         ipv8_config['keys'] = []  # We load the keys ourselves
         self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.ipv8.statistics)
 
-        self.session = GumbyMinimalSession(self.tribler_config)
-        self.session.trustchain_keypair = read_keypair_trustchain(self.tribler_config.trustchain.ec_keypair_filename)
+        self.gumby_session = GumbyMinimalSession(self.tribler_config)
 
         # Load overlays
-        self.custom_ipv8_community_loader.load(self.ipv8, self.session)
+        self.custom_ipv8_community_loader.load(self.ipv8, self.gumby_session)
 
         # Set bootstrap servers if specified
         if self.bootstrappers:

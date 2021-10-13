@@ -1,7 +1,9 @@
 from pony.orm import db_session
 
 from tribler_common.simpledefs import DLSTATUS_SEEDING
-from tribler_core.modules.metadata_store.community.gigachannel_community import GigaChannelCommunity
+from tribler_core.components.gigachannel.gigachannel_component import GigaChannelComponent
+from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler_core.components.metadata_store.metadata_store_component import MetadataStoreComponent
 
 from gumby.experiment import experiment_callback
 from gumby.modules.community_experiment_module import IPv8OverlayExperimentModule
@@ -14,7 +16,9 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
     """
 
     def __init__(self, experiment):
-        super(GigaChannelModule, self).__init__(experiment, GigaChannelCommunity)
+        gigachannel_component = GigaChannelComponent.instance()
+        community = gigachannel_component.community
+        super(GigaChannelModule, self).__init__(experiment, community)
 
     def on_id_received(self):
         super(GigaChannelModule, self).on_id_received()
@@ -39,13 +43,16 @@ class GigaChannelModule(IPv8OverlayExperimentModule):
         """
         Write information about all discovered channels away.
         """
-        if not self.session.mds:
+        mds_component = MetadataStoreComponent.instance()
+        if not mds_component:
             return
 
+        mds = mds_component.mds
+        download_manager = LibtorrentComponent.instance().download_manager
         with db_session:
-            self.autoplot_add_point('known_channels', len(list(self.session.mds.ChannelMetadata.select())))
-            self.autoplot_add_point('total_torrents', len(list(self.session.mds.TorrentMetadata.select())))
-        self.autoplot_add_point('downloading_channels', len(self.session.dlmgr.get_downloads()))
+            self.autoplot_add_point('known_channels', len(list(mds.ChannelMetadata.select())))
+            self.autoplot_add_point('total_torrents', len(list(mds.TorrentMetadata.select())))
+        self.autoplot_add_point('downloading_channels', len(download_manager.get_downloads()))
         self.autoplot_add_point('completed_channels',
-                                len([c for c in self.session.dlmgr.get_downloads()
+                                len([c for c in download_manager.get_downloads()
                                      if c.get_state().get_status() == DLSTATUS_SEEDING]))

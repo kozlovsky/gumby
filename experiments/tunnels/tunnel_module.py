@@ -6,6 +6,8 @@ from ipv8.messaging.anonymization.tunnel import PEER_FLAG_EXIT_BT, PEER_FLAG_REL
 
 from tribler_common.simpledefs import DOWNLOAD, UPLOAD, dlstatus_strings
 
+from tribler_core.components.libtorrent.libtorrent_component import LibtorrentComponent
+from tribler_core.components.payout.payout_component import PayoutComponent
 from tribler_core.modules.tunnel.community.community import TriblerTunnelCommunity
 from tribler_core.utilities.unicode import hexlify
 
@@ -54,9 +56,13 @@ class TunnelModule(IPv8OverlayExperimentModule):
                             self._logger.debug("Received peers %s (%s, %s) down total: %s, upload: %s, version %s ",
                                                peer["id"], peer["ip"], peer["port"], peer["dtotal"],
                                                peer["utotal"], peer["extended_version"])
-                    for pid, hashes in peer_aggregate.items():
-                        for infohash, balance in hashes.items():
-                            self.session.payout_manager.update_peer(pid, infohash, balance)
+
+                    payout_component = PayoutComponent.instance()
+                    if payout_component:
+                        payout_manager = payout_component.payout_manager
+                        for pid, hashes in peer_aggregate.items():
+                            for infohash, balance in hashes.items():
+                                payout_manager.update_peer(pid, infohash, balance)
 
                 status_dict = {
                     "time": time.time() - self.experiment.scenario_runner.exp_start_time,
@@ -72,7 +78,10 @@ class TunnelModule(IPv8OverlayExperimentModule):
 
             return []
 
-        self.session.dlmgr.set_download_states_callback(monitor_downloads)
+        libtorrent_component = LibtorrentComponent.instance()
+        assert libtorrent_component
+        download_manager = libtorrent_component.download_manager
+        download_manager.set_download_states_callback(monitor_downloads)
 
     # TunnelSettings should be obtained from tribler_config settings. But not all properties of the tunnel settings can
     # be controlled that way. So we store a custom TunnelSettings object in the community launcher. Properties that have
