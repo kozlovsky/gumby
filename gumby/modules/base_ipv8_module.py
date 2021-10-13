@@ -3,6 +3,7 @@ import os
 import time
 from asyncio import Future
 from binascii import hexlify
+from typing import Optional, Protocol, runtime_checkable
 
 from ipv8.bootstrapping.dispersy.bootstrapper import DispersyBootstrapper
 from ipv8.configuration import get_default_configuration
@@ -27,7 +28,16 @@ class GumbyMinimalSession:
         self.trustchain_keypair = None
 
 
-class BaseIPv8Module(ExperimentModule):
+@runtime_checkable
+class IPv8Provider(Protocol):
+    session: Optional[GumbyMinimalSession]
+    ipv8_available: Future
+    ipv8: Optional[IPv8]
+    custom_ipv8_community_loader: IsolatedIPv8CommunityLoader
+    tribler_config = None
+
+
+class BaseIPv8Module(ExperimentModule, IPv8Provider):
 
     @classmethod
     def get_ipv8_provider(cls, experiment):
@@ -41,7 +51,6 @@ class BaseIPv8Module(ExperimentModule):
             raise Exception("Unable to load multiple IPv8 providers in a single experiment")
 
         super(BaseIPv8Module, self).__init__(experiment)
-        self.has_ipv8 = True
         self.session = None
         self.tribler_config = None
         self.ipv8_port = None
