@@ -29,15 +29,15 @@ from tribler_core.utilities.unicode import hexlify
 
 from gumby.experiment import experiment_callback
 from gumby.gumby_tribler_config import GumbyTriblerConfig
-from gumby.modules.base_ipv8_module import BaseIPv8Module
+from gumby.modules.base_ipv8_module import BaseTriblerOrIPv8Module
 from gumby.util import run_task
 
 
-class TriblerModule(BaseIPv8Module):
+class TriblerModule(BaseTriblerOrIPv8Module):
     tribler_session: Session
 
     def __init__(self, experiment):
-        super(TriblerModule, self).__init__(experiment)
+        super().__init__(experiment)
         self.transfer_size = 25 * 1024 * 1024
         self.ipv8 = None
         self.download_stats = {
@@ -45,9 +45,6 @@ class TriblerModule(BaseIPv8Module):
             'progress': 0.0,
             'upload': 0
         }
-
-    def create_ipv8_community_loader(self):
-        assert False  # not used
 
     @experiment_callback
     async def start_session(self):

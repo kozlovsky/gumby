@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from abc import abstractmethod
 from asyncio import Future
 from binascii import hexlify
 from typing import Optional, Protocol, runtime_checkable
@@ -37,17 +38,17 @@ class IPv8Provider(Protocol):
     tribler_config = None
 
 
-class BaseIPv8Module(ExperimentModule, IPv8Provider):
+class BaseTriblerOrIPv8Module(ExperimentModule, IPv8Provider):
 
     @classmethod
     def get_ipv8_provider(cls, experiment):
         for module in experiment.experiment_modules:
-            if isinstance(module, BaseIPv8Module):
+            if isinstance(module, IPv8Provider):
                 return module
         return None
 
     def __init__(self, experiment):
-        if BaseIPv8Module.get_ipv8_provider(experiment) is not None:
+        if self.get_ipv8_provider(experiment) is not None:
             raise Exception("Unable to load multiple IPv8 providers in a single experiment")
 
         super().__init__(experiment)
@@ -111,6 +112,49 @@ class BaseIPv8Module(ExperimentModule, IPv8Provider):
         super().on_id_received()
         self.tribler_config = self.setup_config()
 
+    @abstractmethod
+    def setup_config(self):
+        raise NotImplementedError
+
+    @experiment_callback
+    def enable_ipv8_statistics(self):
+        self.tribler_config.ipv8.statistics = True
+
+    @experiment_callback
+    def start_ipv8_statistics_monitor(self):
+        run_task(self.write_ipv8_statistics, interval=1)
+
+    @experiment_callback
+    def isolate_ipv8_overlay(self, name):
+        self.custom_ipv8_community_loader.isolate(name)
+
+
+class BaseIPv8Module(BaseTriblerOrIPv8Module):
+    def __init__(self, experiment):
+        super().__init__(experiment)
+        self.gumby_session = None
+        self.tribler_config = None
+        self.ipv8_port = None
+        self.session_id = os.environ['SYNC_HOST'] + os.environ['SYNC_PORT']
+        self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
+        self.ipv8_available = Future()
+        self.ipv8 = None
+        self.bootstrappers = []
+
+    def setup_config(self):
+        if self.ipv8_port is None:
+            self.ipv8_port = 12000 + self.experiment.my_id
+        self._logger.info("IPv8 port set to %d", self.ipv8_port)
+
+        my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
+
+        config = GumbyConfig()
+        config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
+        self._logger.info("Setting state dir to %s", my_state_path)
+        config.state_dir = my_state_path
+        config.ipv8.port = self.ipv8_port
+        return config
+
     def create_ipv8_community_loader(self):
         loader = IsolatedIPv8CommunityLoader(self.session_id)
         loader.set_launcher(DHTCommunityLauncher())
@@ -123,7 +167,7 @@ class BaseIPv8Module(ExperimentModule, IPv8Provider):
         Start an IPv8 session.
         """
         ipv8_config = get_default_configuration()
-        ipv8_config['port'] = self.tribler_config.ipv8.port 
+        ipv8_config['port'] = self.tribler_config.ipv8.port
         ipv8_config['overlays'] = []
         ipv8_config['keys'] = []  # We load the keys ourselves
         self.ipv8 = IPv8(ipv8_config, enable_statistics=self.tribler_config.ipv8.statistics)
@@ -148,29 +192,3 @@ class BaseIPv8Module(ExperimentModule, IPv8Provider):
     @experiment_callback
     async def stop_session(self):
         await self.ipv8.stop()
-
-    @experiment_callback
-    def enable_ipv8_statistics(self):
-        self.tribler_config.ipv8.statistics = True
-
-    @experiment_callback
-    def start_ipv8_statistics_monitor(self):
-        run_task(self.write_ipv8_statistics, interval=1)
-
-    @experiment_callback
-    def isolate_ipv8_overlay(self, name):
-        self.custom_ipv8_community_loader.isolate(name)
-
-    def setup_config(self):
-        if self.ipv8_port is None:
-            self.ipv8_port = 12000 + self.experiment.my_id
-        self._logger.info("IPv8 port set to %d", self.ipv8_port)
-
-        my_state_path = os.path.join(os.environ['OUTPUT_DIR'], str(self.my_id))
-
-        config = GumbyConfig()
-        config.trustchain.ec_keypair_filename = os.path.join(my_state_path, "tc_keypair_" + str(self.experiment.my_id))
-        self._logger.info("Setting state dir to %s", my_state_path)
-        config.state_dir = my_state_path
-        config.ipv8.port = self.ipv8_port
-        return config
