@@ -44,6 +44,7 @@ fi
 
 # If we compile for Python 3, we want to install a newer version since the version on the DAS5 is outdated.
 if [ ! -e ~/python3/bin/python3 ]; then
+    echo "Installing Python 3.8"
     pushd $HOME
     wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz
     tar -xzvf Python-3.8.12.tgz
@@ -52,6 +53,8 @@ if [ ! -e ~/python3/bin/python3 ]; then
     make install -j24
     popd
     popd
+else
+    echo "Skip installing Python 3.8"
 fi
 
 export PATH=$HOME/python3/bin:$PATH
