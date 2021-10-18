@@ -4,7 +4,7 @@
 # %*% experiment is run as it will detect if the environment is up to date and exit if there's nothing to do.
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=25
+SCRIPT_VERSION=26
 
 # Code:
 set -e
@@ -91,7 +91,7 @@ if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
     fi
     pushd $BOOST_SRC
     ./bootstrap.sh
-    export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.7m"
+    export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$HOME/python3/include/python3.8m"
     ./b2 variant=debug -j24 --prefix=$VENV install
     rm -rf bin.v2
     popd
@@ -119,7 +119,7 @@ if [ ! -e $VENV/lib/python*/site-packages/libtorrent*.so  -o ! -e $LIBTORRENT_MA
     pushd $LIBTORRENT_SRC
 
     # The configuration of libtorrent highly depends on whether we are using Python 2 or Python 3
-    PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.7m -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python37 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
+    PYTHON=$VENV/bin/python CPPFLAGS="-I$VENV/include" LDFLAGS="-L$VENV/lib" ./configure PYTHON_LDFLAGS="-lpython3.8m -lpthread -ldl -lutil -lm" --enable-python-binding --with-boost-python=boost_python38 --with-boost-libdir=$VENV/lib --with-boost=$VENV --prefix=$VENV
 
     make -j24
     make install
