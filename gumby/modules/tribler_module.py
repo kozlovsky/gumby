@@ -10,6 +10,7 @@ from random import Random
 from pony.orm import db_session
 
 from ipv8.dht.community import DHTCommunity
+from ipv8.peer import Peer
 
 from tribler_common.simpledefs import dlstatus_strings
 
@@ -45,6 +46,30 @@ class TriblerModule(BaseTriblerOrIPv8Module):
             'progress': 0.0,
             'upload': 0
         }
+        self.overlays_to_isolate = {}
+
+    @experiment_callback
+    def isolate_ipv8_overlay(self, name):
+        self.overlays_to_isolate.setdefault(name, False)
+
+    def do_isolate_overlays(self):
+        for overlay in self.ipv8.overlays:
+            name = overlay.get_name()
+            if name in self.overlays_to_isolate and not self.overlays_to_isolate[name]:
+                overlay.community_id = self.generate_isolated_community_id(overlay)
+                self.overlays_to_isolate[name] = True
+        for overlay_name, was_isolated in self.overlays_to_isolate.items():
+            if not was_isolated:
+                raise RuntimeError(f'Overlay {overlay_name} was not isolated')
+
+    def generate_isolated_community_id(self, overlay):
+        from ipv8.keyvault.crypto import ECCrypto
+        eccrypto = ECCrypto()
+        unique_id = (overlay.get_name() + self.session_id).encode('utf-8')
+        private_bin = b"".join([unique_id[i:i+1] if i < len(unique_id) else b"0" for i in range(68)])
+        eckey = eccrypto.key_from_private_bin(b"LibNaCLSK:" + private_bin)
+        master_peer = Peer(eckey.pub().key_to_bin())
+        return master_peer.mid
 
     @experiment_callback
     async def start_session(self):
@@ -54,7 +79,6 @@ class TriblerModule(BaseTriblerOrIPv8Module):
             LibtorrentComponent(),
             MetadataStoreComponent(),
             GigaChannelComponent(),
-
             BandwidthAccountingComponent(),
             PopularityComponent()
         ]
@@ -73,11 +97,13 @@ class TriblerModule(BaseTriblerOrIPv8Module):
         # loader.set_launcher(DHTCommunityLauncher())
         # loader.set_launcher(IPv8DiscoveryCommunityLauncher())
 
+        self.ipv8 = Ipv8Component.instance().ipv8
+        self.do_isolate_overlays()
+
         self._logger.info("Starting Tribler Session")
         await session.start()
         self._logger.info("Tribler Session started")
 
-        self.ipv8 = Ipv8Component.instance().ipv8
         self.ipv8_available.set_result(self.ipv8)
 
     @experiment_callback

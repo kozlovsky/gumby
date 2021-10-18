@@ -34,7 +34,6 @@ class IPv8Provider(Protocol):
     gumby_session: Optional[GumbyMinimalSession]
     ipv8_available: Future
     ipv8: Optional[IPv8]
-    custom_ipv8_community_loader: IsolatedIPv8CommunityLoader
     tribler_config = None
 
 
@@ -56,7 +55,6 @@ class BaseTriblerOrIPv8Module(ExperimentModule, IPv8Provider):
         self.tribler_config = None
         self.ipv8_port = None
         self.session_id = os.environ['SYNC_HOST'] + os.environ['SYNC_PORT']
-        self.custom_ipv8_community_loader = self.create_ipv8_community_loader()
         self.ipv8_available = Future()
         self.ipv8 = None
         self.bootstrappers = []
@@ -111,6 +109,7 @@ class BaseTriblerOrIPv8Module(ExperimentModule, IPv8Provider):
     def on_id_received(self):
         super().on_id_received()
         self.tribler_config = self.setup_config()
+        setattr(self.experiment, 'tribler_config', self.tribler_config)
 
     @abstractmethod
     def setup_config(self):
@@ -123,10 +122,6 @@ class BaseTriblerOrIPv8Module(ExperimentModule, IPv8Provider):
     @experiment_callback
     def start_ipv8_statistics_monitor(self):
         run_task(self.write_ipv8_statistics, interval=1)
-
-    @experiment_callback
-    def isolate_ipv8_overlay(self, name):
-        self.custom_ipv8_community_loader.isolate(name)
 
 
 class BaseIPv8Module(BaseTriblerOrIPv8Module):
@@ -141,6 +136,16 @@ class BaseIPv8Module(BaseTriblerOrIPv8Module):
         self.ipv8 = None
         self.bootstrappers = []
 
+    def create_ipv8_community_loader(self):
+        loader = IsolatedIPv8CommunityLoader(self.session_id)
+        loader.set_launcher(DHTCommunityLauncher())
+        loader.set_launcher(IPv8DiscoveryCommunityLauncher())
+        return loader
+
+    @experiment_callback
+    def isolate_ipv8_overlay(self, name):
+        self.custom_ipv8_community_loader.isolate(name)
+
     def setup_config(self):
         if self.ipv8_port is None:
             self.ipv8_port = 12000 + self.experiment.my_id
@@ -154,12 +159,6 @@ class BaseIPv8Module(BaseTriblerOrIPv8Module):
         config.state_dir = my_state_path
         config.ipv8.port = self.ipv8_port
         return config
-
-    def create_ipv8_community_loader(self):
-        loader = IsolatedIPv8CommunityLoader(self.session_id)
-        loader.set_launcher(DHTCommunityLauncher())
-        loader.set_launcher(IPv8DiscoveryCommunityLauncher())
-        return loader
 
     @experiment_callback
     async def start_session(self):
