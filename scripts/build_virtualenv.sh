@@ -83,7 +83,8 @@ if [ ! -e $VENV/lib/libboost_system.so -o ! -e $BOOST_MARKER ]; then
     BOOST_SRC=boost_$BOOST_PATHV
     BOOST_TAR=$BOOST_SRC.tar.gz
     if [ ! -e $BOOST_TAR ]; then
-        wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR
+        wget https://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION/$BOOST_TAR  --no-check-certificate
+#       wget https://boostorg.jfrog.io/artifactory/main/release/$BOOST_VERSION/source/$BOOST_TAR
     fi
     if [ ! -d $BOOST_SRC ]; then
         tar -xzvf $BOOST_TAR
@@ -134,7 +135,7 @@ if [ ! -e $VENV/include/gmp.h  -o ! -e $GMP_MARKER ]; then
 
     if [ ! -e $VENV/src/gmp-$GMP_VERSION.tar.bz2 ]; then
         pushd $VENV/src
-        wget "https://ftp.gnu.org/gnu/gmp/gmp-$GMP_VERSION.tar.bz2"
+        wget "https://ftp.gnu.org/gnu/gmp/gmp-$GMP_VERSION.tar.bz2" --no-check-certificate
         popd
     fi
 
@@ -184,7 +185,7 @@ if [ ! -e $VENV/include/mpc.h  -o ! -e $MPC_MARKER ]; then
 
     if [ ! -e $VENV/src/mpc-$MPC_VERSION.tar.gz ]; then
         pushd $VENV/src
-        wget https://ftp.gnu.org/gnu/mpc/mpc-$MPC_VERSION.tar.gz
+        wget https://ftp.gnu.org/gnu/mpc/mpc-$MPC_VERSION.tar.gz  --no-check-certificate
         popd
     fi
 
@@ -209,7 +210,7 @@ if [ ! -e $VENV/lib/libffi-$LIBFFI_VERSION/include/ffi.h -o ! -e $LIBFFI_MARKER 
     LIBFFI_PACKAGE="libffi-$LIBFFI_VERSION.tar.gz"
     if [ ! -e $VENV/src/$LIBFFI_PACKAGE ]; then
         pushd $VENV/src
-        wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"
+        wget "ftp://sourceware.org:/pub/libffi/$LIBFFI_PACKAGE"  --no-check-certificate
         popd
     fi
 
@@ -234,7 +235,7 @@ if [ ! -e $VENV/include/sodium.h  -o ! -e $LIBSODIUM_MARKER ]; then
     LIBSODIUM_PACKAGE="libsodium-$LIBSODIUM_VERSION.tar.gz"
     if [ ! -e $VENV/src/$LIBSODIUM_PACKAGE ]; then
         pushd $VENV/src
-        wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"
+        wget "https://download.libsodium.org/libsodium/releases/$LIBSODIUM_PACKAGE"  --no-check-certificate
         popd
     fi
 
