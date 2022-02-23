@@ -458,13 +458,16 @@ class ExperimentClient(LineReceiver):
         """
         stuff = self.perform_class_import(self._logger, line_number, line)
 
-        # If something has not been loaded previously.
-        if stuff not in self.loaded_experiment_module_classes:
-            self.loaded_experiment_module_classes.append(stuff)
-            self._logger.info("Loading module: %s", line)
+        if stuff in self.loaded_experiment_module_classes:
+            # has already been loaded previously
+            return
 
-            if isinstance(stuff, type) and issubclass(stuff, ExperimentModule) and stuff is not ExperimentModule:
-                stuff(self)
-                self._logger.info("Loadded module: %s", line)
-            else:
-                self._logger.error('ExperimentModule subclass expected in %s:%d. Got: %s', filename, line_number, line)
+        if not (isinstance(stuff, type) and issubclass(stuff, ExperimentModule) and stuff is not ExperimentModule):
+            self._logger.error('ExperimentModule subclass expected in %s:%d: %s, Got: %r', filename, line_number, line,
+                               stuff)
+            sys.exit(-1)
+
+        self.loaded_experiment_module_classes.append(stuff)
+        self._logger.info("Loading module: %s", line)
+        stuff(self)
+        self._logger.info("Loaded module: %s", line)
