@@ -4,7 +4,7 @@
 # %*% experiment is run as it will detect if the environment is up to date and exit if there's nothing to do.
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=26
+SCRIPT_VERSION=25
 
 # Code:
 set -e
@@ -35,6 +35,12 @@ if [ ! -z "$VIRTUALENV_DIR" ]; then
 else
     VENV=$HOME/venv3
 fi
+
+echo "VENV: $VENV"
+
+ls -al "$VENV"
+
+echo "-----"
 
 export LD_LIBRARY_PATH=$VENV/lib:$LD_LIBRARY_PATH
 
