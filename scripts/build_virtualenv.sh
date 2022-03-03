@@ -4,7 +4,7 @@
 # %*% experiment is run as it will detect if the environment is up to date and exit if there's nothing to do.
 
 # Increase this every time the file gets modified.
-SCRIPT_VERSION=25
+SCRIPT_VERSION=26
 
 # Code:
 set -e
